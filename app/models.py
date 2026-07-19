@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime
 from sqlalchemy.sql import func
 
 from .database import Base
@@ -71,13 +71,25 @@ class Portfolio(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    user_id = Column(String(20), nullable=False)
+    user_id = Column(
+        String(20),
+        nullable=False
+    )
 
-    symbol = Column(String(30), nullable=False)
+    symbol = Column(
+        String(30),
+        nullable=False
+    )
 
-    quantity = Column(Integer, nullable=False)
+    quantity = Column(
+        Integer,
+        nullable=False
+    )
 
-    average_price = Column(nullable=False)
+    average_price = Column(
+        Float,
+        nullable=False
+    )
 
     created_at = Column(
         DateTime(timezone=True),
@@ -90,9 +102,15 @@ class Watchlist(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    user_id = Column(String(20), nullable=False)
+    user_id = Column(
+        String(20),
+        nullable=False
+    )
 
-    symbol = Column(String(30), nullable=False)
+    symbol = Column(
+        String(30),
+        nullable=False
+    )
 
     created_at = Column(
         DateTime(timezone=True),
