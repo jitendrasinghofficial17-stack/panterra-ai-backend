@@ -7,10 +7,7 @@ from app.models import User
 from app.schemas import UserRegister, UserResponse
 from app.auth import hash_password
 
-router = APIRouter(
-    prefix="/users",
-    tags=["Users"]
-)
+router = APIRouter()
 
 
 @router.post("/register", response_model=UserResponse)
@@ -18,8 +15,7 @@ def register_user(
     user: UserRegister,
     db: Session = Depends(get_db)
 ):
-
-    # Check mobile number
+    # Check if mobile already exists
     existing_mobile = db.query(User).filter(
         User.mobile_number == user.mobile_number
     ).first()
@@ -30,7 +26,7 @@ def register_user(
             detail="Mobile number already registered."
         )
 
-    # Check email
+    # Check if email already exists
     if user.email:
         existing_email = db.query(User).filter(
             User.email == user.email
@@ -42,6 +38,7 @@ def register_user(
                 detail="Email already registered."
             )
 
+    # Create new user
     new_user = User(
         user_id="USR" + uuid.uuid4().hex[:8].upper(),
         full_name=user.full_name,
