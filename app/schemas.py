@@ -1,15 +1,27 @@
+from typing import Optional
+
 from pydantic import BaseModel, EmailStr
 
 
 class UserRegister(BaseModel):
     full_name: str
-    email: EmailStr
+    mobile_number: str
+    email: Optional[EmailStr] = None
     password: str
 
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    mobile_number: str
     password: str
+
+
+class OTPRequest(BaseModel):
+    mobile_number: str
+
+
+class OTPVerify(BaseModel):
+    mobile_number: str
+    otp: str
 
 
 class PortfolioCreate(BaseModel):
