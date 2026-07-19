@@ -1,61 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-import uuid
-
-from app.database import get_db
-from app.models import User
+from fastapi import APIRouter, HTTPException
 from app.schemas import UserRegister, UserResponse
-from app.auth import hash_password
+from app.auth import hash_password, verify_password
+import uuid
 
 router = APIRouter()
 
 
-@router.post("/register", response_model=UserResponse)
-def register_user(
-    user: UserRegister,
-    db: Session = Depends(get_db)
-):
-    # Check if mobile already exists
-    existing_mobile = db.query(User).filter(
-        User.mobile_number == user.mobile_number
-    ).first()
+# Temporary in-memory database
+# (We'll replace this with PostgreSQL in the next step.)
 
-    if existing_mobile:
-        raise HTTPException(
-            status_code=400,
-            detail="Mobile number already registered."
-        )
-
-    # Check if email already exists
-    if user.email:
-        existing_email = db.query(User).filter(
-            User.email == user.email
-        ).first()
-
-        if existing_email:
-            raise HTTPException(
-                status_code=400,
-                detail="Email already registered."
-            )
-
-    # Create new user
-    new_user = User(
-        user_id="USR" + uuid.uuid4().hex[:8].upper(),
-        full_name=user.full_name,
-        mobile_number=user.mobile_number,
-        email=user.email,
-        password=hash_password(user.password)
-    )
-
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    return UserResponse(
-        status="success",
-        message="Registration Successful",
-        user_id=new_user.user_id
-    )
+users_db = {}
 
 
 @router.get("/")
@@ -65,8 +19,70 @@ def users_home():
     }
 
 
-@router.get("/login")
-def login_info():
+@router.post(
+    "/register",
+    response_model=UserResponse
+)
+def register_user(user: UserRegister):
+
+    # Check mobile number
+    if user.mobile_number in users_db:
+        raise HTTPException(
+            status_code=400,
+            detail="Mobile number already registered"
+        )
+
+    # Check email
+    if user.email:
+        for u in users_db.values():
+            if u["email"] == user.email:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Email already registered"
+                )
+
+    user_id = "USR-" + uuid.uuid4().hex[:8].upper()
+
+    users_db[user.mobile_number] = {
+        "user_id": user_id,
+        "full_name": user.full_name,
+        "mobile_number": user.mobile_number,
+        "email": user.email,
+        "password": hash_password(user.password)
+    }
+
     return {
-        "message": "User Login Endpoint"
+        "status": "success",
+        "message": "Registration Successful",
+        "user_id": user_id
+    }
+
+
+@router.post("/login")
+def login(
+    mobile_number: str,
+    password: str
+):
+
+    if mobile_number not in users_db:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Mobile Number"
+        )
+
+    user = users_db[mobile_number]
+
+    if not verify_password(
+        password,
+        user["password"]
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Password"
+        )
+
+    return {
+        "status": "success",
+        "message": "Login Successful",
+        "user_id": user["user_id"]
     }
