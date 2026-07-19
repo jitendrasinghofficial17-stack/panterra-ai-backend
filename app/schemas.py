@@ -1,6 +1,5 @@
-from typing import Optional
-
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 
 class UserRegister(BaseModel):
@@ -10,29 +9,7 @@ class UserRegister(BaseModel):
     password: str
 
 
-class UserLogin(BaseModel):
-    mobile_number: str
-    password: str
-
-
-class OTPRequest(BaseModel):
-    mobile_number: str
-
-
-class OTPVerify(BaseModel):
-    mobile_number: str
-    otp: str
-
-
-class PortfolioCreate(BaseModel):
-    symbol: str
-    quantity: int
-    average_price: float
-
-
-class WatchlistCreate(BaseModel):
-    symbol: str
-
-
-class Message(BaseModel):
+class UserResponse(BaseModel):
+    status: str
     message: str
+    user_id: str
