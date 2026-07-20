@@ -1,13 +1,12 @@
 from fastapi import FastAPI
-
 from app.database import Base, engine
-
 from app.routers.users import router as users_router
 from app.routers.portfolio import router as portfolio_router
 from app.routers.watchlist import router as watchlist_router
 from app.routers.market import router as market_router
 from app.routers.signals import router as signals_router
 from app.routes import history
+from app.routes import risk_manager
 app = FastAPI(
     title="PANTERRA AI Backend",
     version="1.0.0",
@@ -61,4 +60,9 @@ app.include_router(
     history.router,
     prefix="/history",
     tags=["History"]
+)
+app.include_router(
+    risk_manager.router,
+    prefix="/risk-manager",
+    tags=["Risk Manager"]
 )
