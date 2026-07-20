@@ -1,6 +1,8 @@
 from fastapi import APIRouter
+
 from app.services.market_data import get_historical_data
 from app.services.indicators import calculate_indicators
+from app.services.support_resistance import calculate_support_resistance
 
 router = APIRouter()
 
@@ -24,7 +26,11 @@ def get_signal(symbol: str):
             "message": "Market data not available"
         }
 
+    # Calculate indicators
     df = calculate_indicators(df)
+
+    # Calculate support & resistance
+    levels = calculate_support_resistance(df)
 
     latest = df.iloc[-1]
 
@@ -79,13 +85,20 @@ def get_signal(symbol: str):
         "signal": signal,
         "trend": trend,
         "confidence": confidence,
+
         "price": price,
+        "support": levels["support"],
+        "resistance": levels["resistance"],
+
         "target": target,
         "stop_loss": stop_loss,
+
         "RSI": round(float(latest["RSI"]), 2),
         "EMA20": round(float(latest["EMA20"]), 2),
         "SMA20": round(float(latest["SMA20"]), 2),
+
         "MACD": round(float(latest["MACD"]), 4),
         "MACD_SIGNAL": round(float(latest["MACD_SIGNAL"]), 4),
+
         "reason": reason
     }
