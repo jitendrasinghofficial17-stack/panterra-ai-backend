@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.services.market_data import get_historical_data
 from app.services.indicators import calculate_indicators
 from app.services.support_resistance import calculate_support_resistance
+from app.services.atr import calculate_atr
 
 router = APIRouter()
 
@@ -29,7 +30,10 @@ def get_signal(symbol: str):
     # Calculate indicators
     df = calculate_indicators(df)
 
-    # Calculate support & resistance
+    # Calculate ATR
+    df = calculate_atr(df)
+
+    # Calculate Support & Resistance
     levels = calculate_support_resistance(df)
 
     latest = df.iloc[-1]
@@ -77,21 +81,43 @@ def get_signal(symbol: str):
 
     price = round(float(latest["close"]), 2)
 
-    stop_loss = round(price * 0.98, 2)
-    target = round(price * 1.05, 2)
+    atr = round(float(latest["ATR"]), 2)
+
+    stop_loss = round(price - (1.5 * atr), 2)
+
+    target1 = round(price + (2 * atr), 2)
+    target2 = round(price + (3 * atr), 2)
+    target3 = round(price + (4 * atr), 2)
+
+    risk = round(price - stop_loss, 2)
+    reward = round(target2 - price, 2)
+
+    if risk > 0:
+        risk_reward = f"1:{round(reward / risk, 2)}"
+    else:
+        risk_reward = "N/A"
 
     return {
         "symbol": symbol.upper(),
+
         "signal": signal,
         "trend": trend,
         "confidence": confidence,
 
         "price": price,
+
         "support": levels["support"],
         "resistance": levels["resistance"],
 
-        "target": target,
+        "ATR": atr,
+
         "stop_loss": stop_loss,
+
+        "target1": target1,
+        "target2": target2,
+        "target3": target3,
+
+        "risk_reward": risk_reward,
 
         "RSI": round(float(latest["RSI"]), 2),
         "EMA20": round(float(latest["EMA20"]), 2),
