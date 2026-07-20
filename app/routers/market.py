@@ -30,39 +30,55 @@ def get_quote(symbol: str):
         "X-API-KEY": API_KEY
     }
 
-    response = requests.get(
-        f"{BASE_URL}/prices/history",
-        headers=headers,
-        params={
-            "ticker": symbol.upper(),
-            "interval": "1day",
-            "limit": 1
-        },
-        timeout=20
-    )
-
-    if response.status_code != 200:
-        raise HTTPException(
-            status_code=response.status_code,
-            detail=response.text
+    try:
+        response = requests.get(
+            f"{BASE_URL}/prices/snapshot",
+            params={
+                "ticker": symbol.upper()
+            },
+            headers=headers,
+            timeout=20
         )
 
-    data = response.json()
+        # Debug logs
+        print("========== FINANCIAL DATA API ==========")
+        print("URL:", response.url)
+        print("Status:", response.status_code)
+        print("Response:", response.text)
+        print("========================================")
 
-    if "prices" not in data or len(data["prices"]) == 0:
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=response.text
+            )
+
+        data = response.json()
+
+        if "prices" not in data or len(data["prices"]) == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="No market data found"
+            )
+
+        latest = data["prices"][-1]
+
+        return {
+            "symbol": symbol.upper(),
+            "price": latest.get("close"),
+            "open": latest.get("open"),
+            "high": latest.get("high"),
+            "low": latest.get("low"),
+            "volume": latest.get("volume"),
+            "date": latest.get("time")
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print("ERROR:", str(e))
         raise HTTPException(
-            status_code=404,
-            detail="No market data found"
+            status_code=500,
+            detail=str(e)
         )
-
-    latest = data["prices"][-1]
-
-    return {
-        "symbol": symbol.upper(),
-        "price": latest.get("close"),
-        "open": latest.get("open"),
-        "high": latest.get("high"),
-        "low": latest.get("low"),
-        "volume": latest.get("volume"),
-        "date": latest.get("time")
-    }
