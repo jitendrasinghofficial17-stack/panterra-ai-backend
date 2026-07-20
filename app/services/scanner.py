@@ -9,7 +9,7 @@ from app.services.adx import calculate_adx
 from app.services.bollinger import calculate_bollinger_bands
 from app.services.ai_engine import calculate_ai_score
 
-WATCHLIST = [
+DEFAULT_SYMBOLS = [
     "AAPL",
     "MSFT",
     "NVDA",
@@ -23,11 +23,19 @@ WATCHLIST = [
 ]
 
 
-def scan_market():
+def scan_market(
+    symbols=None,
+    min_score=0,
+    action=None,
+    limit=50
+):
+
+    if symbols is None:
+        symbols = DEFAULT_SYMBOLS
 
     results = []
 
-    for symbol in WATCHLIST:
+    for symbol in symbols:
 
         try:
 
@@ -36,7 +44,6 @@ def scan_market():
             if df is None or df.empty:
                 continue
 
-            # Calculate Indicators
             df = calculate_indicators(df)
             df = calculate_atr(df)
             df = calculate_supertrend(df)
@@ -48,32 +55,25 @@ def scan_market():
 
             latest = df.iloc[-1]
 
-            # AI Engine
             ai = calculate_ai_score(df)
 
-            # Market Trend
-            if latest["EMA20"] > latest["SMA20"]:
-                market_trend = "Bullish"
-            elif latest["EMA20"] < latest["SMA20"]:
-                market_trend = "Bearish"
-            else:
-                market_trend = "Sideways"
+            trend = (
+                "Bullish"
+                if latest["EMA20"] > latest["SMA20"]
+                else "Bearish"
+            )
 
-            # Trend Strength
-            if latest["ADX"] >= 40:
-                trend_strength = "Very Strong"
-            elif latest["ADX"] >= 25:
-                trend_strength = "Strong"
-            elif latest["ADX"] >= 20:
-                trend_strength = "Moderate"
-            else:
-                trend_strength = "Weak"
+            trend_strength = (
+                "Very Strong"
+                if latest["ADX"] >= 40
+                else "Strong"
+                if latest["ADX"] >= 25
+                else "Moderate"
+                if latest["ADX"] >= 20
+                else "Weak"
+            )
 
-            # Support & Resistance (safe defaults)
-            support = latest["Support"] if "Support" in latest.index else None
-            resistance = latest["Resistance"] if "Resistance" in latest.index else None
-
-            results.append({
+            stock = {
 
                 "symbol": symbol,
 
@@ -87,7 +87,7 @@ def scan_market():
 
                 "confidence": ai["confidence"],
 
-                "market_trend": market_trend,
+                "trend": trend,
 
                 "trend_strength": trend_strength,
 
@@ -95,26 +95,35 @@ def scan_market():
 
                 "ADX": round(float(latest["ADX"]), 2),
 
+                "ATR": round(float(latest["ATR"]), 2),
+
                 "volume": int(latest["volume"]),
-
-                "support": support,
-
-                "resistance": resistance,
 
                 "analysis": ai["reasons"]
 
-            })
+            }
+
+            if stock["technical_score"] < min_score:
+                continue
+
+            if action and stock["action"] != action:
+                continue
+
+            results.append(stock)
 
         except Exception as e:
-            print(f"{symbol}: {e}")
+            print(symbol, e)
 
-    results = sorted(
-        results,
+    results.sort(
         key=lambda x: x["technical_score"],
         reverse=True
     )
 
-    for rank, stock in enumerate(results, start=1):
-        stock["rank"] = rank
+    for i, stock in enumerate(results, start=1):
+        stock["rank"] = i
 
-    return results
+    return {
+        "status": "success",
+        "total": len(results[:limit]),
+        "stocks": results[:limit]
+    }
