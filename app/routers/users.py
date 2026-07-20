@@ -4,7 +4,11 @@ import uuid
 
 from app.database import get_db
 from app.models import User
-from app.schemas import UserRegister, UserResponse
+from app.schemas import (
+    UserRegister,
+    UserResponse,
+    UpdateProfile
+)
 from app.auth import (
     hash_password,
     verify_password,
