@@ -8,6 +8,7 @@ from app.services.volume import calculate_volume
 from app.services.support_resistance import calculate_support_resistance
 from app.services.candlestick import calculate_candlestick_patterns
 from app.services.adx import calculate_adx
+from app.services.bollinger import calculate_bollinger_bands
 
 router = APIRouter()
 
@@ -38,12 +39,20 @@ def get_signal(symbol: str):
     df = calculate_volume(df)
     df = calculate_candlestick_patterns(df)
     df = calculate_adx(df)
-
+    df = calculate_bollinger_bands(df)
+    
     # Support & Resistance
     levels = calculate_support_resistance(df)
 
     latest = df.iloc[-1]
 
+    bb_signal = latest["BB_SIGNAL"]
+
+    bb_upper = round(float(latest["BB_UPPER"]), 2)
+    bb_middle = round(float(latest["BB_MIDDLE"]), 2)
+    bb_lower = round(float(latest["BB_LOWER"]), 2)
+
+    bb_width = round(float(latest["BB_WIDTH"]), 2)
     supertrend = latest["Supertrend_Direction"]
     candlestick = latest["Candlestick"]
 
@@ -192,6 +201,13 @@ def get_signal(symbol: str):
 
         "ATR": atr,
 
+        "bollinger_signal": bb_signal,
+    
+        "bb_upper": bb_upper,
+        "bb_middle": bb_middle,
+        "bb_lower": bb_lower,
+
+        "bb_width": bb_width,
         "stop_loss": stop_loss,
 
         "target1": target1,
