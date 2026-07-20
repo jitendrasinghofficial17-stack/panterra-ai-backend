@@ -4,46 +4,38 @@ import pandas as pd
 
 API_KEY = os.getenv("FINANCIALDATA_API_KEY")
 
+BASE_URL = "https://api.financialdatasets.ai"
+
 
 def get_historical_data(symbol: str):
-
-    url = "https://api.financialdatasets.ai/prices/"
 
     headers = {
         "X-API-KEY": API_KEY
     }
 
-    params = {
-        "ticker": symbol.upper(),
-        "interval": "day",
-        "interval_multiplier": 1
-    }
+    response = requests.get(
+        f"{BASE_URL}/prices/history",
+        headers=headers,
+        params={
+            "ticker": symbol.upper(),
+            "interval": "1day",
+            "limit": 100
+        },
+        timeout=20
+    )
 
-    try:
-        response = requests.get(
-            url,
-            headers=headers,
-            params=params,
-            timeout=20
-        )
-
-        if response.status_code != 200:
-            print(response.text)
-            return None
-
-        data = response.json()
-
-        prices = data.get("prices", [])
-
-        if not prices:
-            return None
-
-        df = pd.DataFrame(prices)
-
-        df["close"] = df["close"].astype(float)
-
-        return df
-
-    except Exception as e:
-        print(e)
+    if response.status_code != 200:
+        print("API Error:", response.text)
         return None
+
+    data = response.json()
+
+    if "prices" not in data:
+        print(data)
+        return None
+
+    df = pd.DataFrame(data["prices"])
+
+    df["close"] = df["close"].astype(float)
+
+    return df
