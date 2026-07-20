@@ -77,3 +77,42 @@ class UpdateProfile(BaseModel):
 class ChangePassword(BaseModel):
     old_password: str
     new_password: str
+    
+# ========================================
+# Trade Journal Schemas
+# ==========================================
+
+class TradeJournalCreate(BaseModel):
+    symbol: str
+    trade_type: str
+    quantity: int
+    entry_price: float
+    stop_loss: float | None = None
+    target: float | None = None
+    strategy: str | None = None
+    notes: str | None = None
+
+
+class TradeJournalUpdate(BaseModel):
+    exit_price: float | None = None
+    pnl: float | None = None
+    notes: str | None = None
+    status: str | None = None
+
+
+class TradeJournalResponse(BaseModel):
+    id: int
+    user_id: str
+    symbol: str
+    trade_type: str
+    quantity: int
+    entry_price: float
+    exit_price: float | None = None
+    stop_loss: float | None = None
+    target: float | None = None
+    strategy: str | None = None
+    notes: str | None = None
+    status: str
+    pnl: float
+
+    model_config = ConfigDict(from_attributes=True)
