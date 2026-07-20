@@ -128,7 +128,7 @@ def get_my_profile(
 ):
 
     return {
-        "status": "success",
+    "status": "success",
         "user": {
             "user_id": current_user.user_id,
             "full_name": current_user.full_name,
