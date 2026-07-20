@@ -1,4 +1,4 @@
-import pandas as pd
+import math
 
 
 def predict_price(df):
@@ -17,55 +17,104 @@ def predict_price(df):
 
     atr = float(latest["ATR"])
 
-    score = 0
+    adx = float(latest["ADX"])
 
-    # Trend
+    upper = float(latest["BB_UPPER"])
+    lower = float(latest["BB_LOWER"])
+
+    volume = float(latest["volume"])
+    avg_volume = df["volume"].tail(20).mean()
+
+    score = 0
+    reasons = []
+
+    # EMA Trend
     if price > ema20:
-        score += 20
+        score += 15
+        reasons.append("Price above EMA20")
 
     if ema20 > sma20:
-        score += 20
+        score += 15
+        reasons.append("EMA20 above SMA20")
 
-    # Momentum
+    # MACD
     if macd > macd_signal:
-        score += 20
+        score += 15
+        reasons.append("MACD Bullish")
 
     # RSI
     if 55 <= rsi <= 70:
-        score += 20
+        score += 15
+        reasons.append("Healthy RSI")
 
-    # Price action
+    elif rsi > 70:
+        score -= 10
+        reasons.append("Overbought")
+
+    elif rsi < 30:
+        score += 10
+        reasons.append("Oversold Bounce")
+
+    # Supertrend
     if latest["Supertrend_Direction"] == "BUY":
-        score += 20
+        score += 15
+        reasons.append("Supertrend BUY")
 
-    confidence = score
+    # ADX
+    if adx >= 25:
+        score += 10
+        reasons.append("Strong Trend")
 
-    if confidence >= 80:
-        prediction = "STRONG UP"
+    # Bollinger Bands
+    if price < lower:
+        score += 10
+        reasons.append("Near Lower Bollinger")
 
-    elif confidence >= 60:
-        prediction = "UP"
+    elif price > upper:
+        score -= 10
+        reasons.append("Near Upper Bollinger")
 
-    elif confidence >= 40:
-        prediction = "SIDEWAYS"
+    # Relative Volume
+    if volume > avg_volume:
+        score += 5
+        reasons.append("High Volume")
+
+    confidence = max(0, min(score, 100))
+
+    if confidence >= 85:
+        prediction = "STRONG BUY"
+
+    elif confidence >= 70:
+        prediction = "BUY"
+
+    elif confidence >= 50:
+        prediction = "HOLD"
+
+    elif confidence >= 30:
+        prediction = "SELL"
 
     else:
-        prediction = "DOWN"
+        prediction = "STRONG SELL"
 
-    tomorrow = round(price + atr * 0.5, 2)
+    target1 = round(price + atr, 2)
+    target2 = round(price + atr * 2, 2)
+    target3 = round(price + atr * 3, 2)
 
-    target3 = round(price + atr * 1.5, 2)
+    stop = round(price - atr * 1.5, 2)
 
-    target7 = round(price + atr * 3, 2)
+    rr = round((target2 - price) / (price - stop), 2)
 
-    stop_loss = round(price - atr * 1.5, 2)
+    probability = min(95, confidence + math.floor(adx / 5))
 
     return {
         "prediction": prediction,
         "confidence": confidence,
+        "success_probability": probability,
         "current_price": round(price, 2),
-        "tomorrow_target": tomorrow,
-        "three_day_target": target3,
-        "seven_day_target": target7,
-        "stop_loss": stop_loss
+        "target1": target1,
+        "target2": target2,
+        "target3": target3,
+        "stop_loss": stop,
+        "risk_reward": f"1:{rr}",
+        "reasons": reasons
     }
