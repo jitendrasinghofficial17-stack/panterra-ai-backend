@@ -7,6 +7,7 @@ from app.routers.portfolio import router as portfolio_router
 from app.routers.watchlist import router as watchlist_router
 from app.routers.market import router as market_router
 from app.routers.signals import router as signals_router
+from app.routes import history
 app = FastAPI(
     title="PANTERRA AI Backend",
     version="1.0.0",
@@ -55,4 +56,9 @@ app.include_router(
     signals_router,
     prefix="/signals",
     tags=["AI Signals"]
+)
+app.include_router(
+    history.router,
+    prefix="/history",
+    tags=["History"]
 )
