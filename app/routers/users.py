@@ -142,7 +142,7 @@ def get_my_profile(
     }
     
     @router.put("/profile")
-def update_profile(
+    def update_profile(
     profile: UpdateProfile,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
