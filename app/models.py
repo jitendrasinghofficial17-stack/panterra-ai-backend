@@ -196,3 +196,44 @@ class TradeJournal(Base):
         DateTime(timezone=True),
         server_default=func.now()
     )
+    
+class PaperTrade(Base):
+    __tablename__ = "paper_trades"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(
+        String(20),
+        nullable=False,
+        index=True
+    )
+
+    symbol = Column(
+        String(30),
+        nullable=False
+    )
+
+    order_type = Column(
+        String(10),
+        nullable=False
+    )
+
+    quantity = Column(
+        Integer,
+        nullable=False
+    )
+
+    price = Column(
+        Float,
+        nullable=False
+    )
+
+    status = Column(
+        String(20),
+        default="EXECUTED"
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
