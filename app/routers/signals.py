@@ -4,6 +4,7 @@ from app.services.market_data import get_historical_data
 from app.services.indicators import calculate_indicators
 from app.services.support_resistance import calculate_support_resistance
 from app.services.atr import calculate_atr
+from app.services.supertrend import calculate_supertrend
 
 router = APIRouter()
 
@@ -27,11 +28,14 @@ def get_signal(symbol: str):
             "message": "Market data not available"
         }
 
-    # Calculate indicators
+    # Calculate Indicators
     df = calculate_indicators(df)
 
     # Calculate ATR
     df = calculate_atr(df)
+
+    # Calculate Supertrend
+    df = calculate_supertrend(df)
 
     # Calculate Support & Resistance
     levels = calculate_support_resistance(df)
@@ -43,40 +47,79 @@ def get_signal(symbol: str):
     trend = "Sideways"
     reason = []
 
+    supertrend = latest["Supertrend_Direction"]
+
+    # STRONG BUY
     if (
-        latest["close"] > latest["EMA20"]
+        supertrend == "BUY"
+        and latest["close"] > latest["EMA20"]
         and latest["EMA20"] > latest["SMA20"]
+        and latest["RSI"] > 55
         and latest["RSI"] < 70
         and latest["MACD"] > latest["MACD_SIGNAL"]
     ):
 
-        signal = "BUY"
-        confidence = 90
+        signal = "STRONG BUY"
+        confidence = 97
         trend = "Bullish"
 
         reason = [
+            "Supertrend BUY",
             "Price above EMA20",
             "EMA20 above SMA20",
-            "RSI below 70",
-            "MACD Bullish Crossover"
+            "MACD Bullish",
+            "Healthy RSI"
         ]
 
+    # STRONG SELL
     elif (
-        latest["close"] < latest["EMA20"]
+        supertrend == "SELL"
+        and latest["close"] < latest["EMA20"]
         and latest["EMA20"] < latest["SMA20"]
-        and latest["RSI"] > 30
+        and latest["RSI"] < 45
         and latest["MACD"] < latest["MACD_SIGNAL"]
     ):
 
-        signal = "SELL"
-        confidence = 90
+        signal = "STRONG SELL"
+        confidence = 97
         trend = "Bearish"
 
         reason = [
+            "Supertrend SELL",
             "Price below EMA20",
             "EMA20 below SMA20",
-            "RSI above 30",
-            "MACD Bearish Crossover"
+            "MACD Bearish",
+            "Weak RSI"
+        ]
+
+    # BUY
+    elif (
+        latest["MACD"] > latest["MACD_SIGNAL"]
+        and latest["RSI"] > 50
+    ):
+
+        signal = "BUY"
+        confidence = 82
+        trend = "Bullish"
+
+        reason = [
+            "MACD Bullish",
+            "RSI Positive"
+        ]
+
+    # SELL
+    elif (
+        latest["MACD"] < latest["MACD_SIGNAL"]
+        and latest["RSI"] < 50
+    ):
+
+        signal = "SELL"
+        confidence = 82
+        trend = "Bearish"
+
+        reason = [
+            "MACD Bearish",
+            "RSI Weak"
         ]
 
     price = round(float(latest["close"]), 2)
@@ -101,13 +144,16 @@ def get_signal(symbol: str):
         "symbol": symbol.upper(),
 
         "signal": signal,
-        "trend": trend,
         "confidence": confidence,
+        "trend": trend,
 
         "price": price,
 
         "support": levels["support"],
         "resistance": levels["resistance"],
+
+        "supertrend": supertrend,
+        "supertrend_value": round(float(latest["Supertrend"]), 2),
 
         "ATR": atr,
 
