@@ -136,3 +136,28 @@ def get_my_profile(
             "created_at": current_user.created_at
         }
     }
+    @router.put("/profile")
+def update_profile(
+    profile: UpdateProfile,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if profile.full_name:
+        current_user.full_name = profile.full_name
+
+    if profile.email:
+        current_user.email = profile.email
+
+    db.commit()
+    db.refresh(current_user)
+
+    return {
+        "status": "success",
+        "message": "Profile updated successfully",
+        "user": {
+            "user_id": current_user.user_id,
+            "full_name": current_user.full_name,
+            "mobile_number": current_user.mobile_number,
+            "email": current_user.email
+        }
+    }
