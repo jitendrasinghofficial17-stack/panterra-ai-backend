@@ -76,6 +76,7 @@ def get_signal(symbol: str):
         and 55 <= latest["RSI"] <= 70
         and latest["RVOL"] >= 1
         and latest["ADX"] >= 25
+        and bb_signal != "OVERBOUGHT"
         and candlestick in [
             "HAMMER",
             "BULLISH_ENGULFING",
@@ -108,7 +109,9 @@ def get_signal(symbol: str):
         and latest["RSI"] < 45
         and latest["RVOL"] >= 1
         and latest["ADX"] >= 25
+        and bb_signal != "OVERSOLD"
         and candlestick in [
+        
             "SHOOTING_STAR",
             "BEARISH_ENGULFING",
             "BEARISH_HARAMI"
