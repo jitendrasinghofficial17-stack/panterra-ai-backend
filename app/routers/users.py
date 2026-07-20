@@ -5,7 +5,11 @@ import uuid
 from app.database import get_db
 from app.models import User
 from app.schemas import UserRegister, UserResponse
-from app.auth import hash_password, verify_password
+from app.auth import (
+    hash_password,
+    verify_password,
+    create_access_token
+)
 
 router = APIRouter()
 
@@ -13,6 +17,7 @@ router = APIRouter()
 @router.get("/")
 def users_home():
     return {
+        "status": "success",
         "message": "Users API Working"
     }
 
@@ -37,6 +42,7 @@ def register_user(
         )
 
     if user.email:
+
         existing_email = db.query(User).filter(
             User.email == user.email
         ).first()
@@ -94,9 +100,18 @@ def login(
             detail="Invalid Password"
         )
 
+    access_token = create_access_token(
+        {
+            "user_id": user.user_id,
+            "mobile_number": user.mobile_number
+        }
+    )
+
     return {
         "status": "success",
         "message": "Login Successful",
+        "access_token": access_token,
+        "token_type": "bearer",
         "user_id": user.user_id,
         "full_name": user.full_name,
         "mobile_number": user.mobile_number
