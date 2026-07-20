@@ -106,3 +106,5 @@ def generate_recommendation(df):
 
         "analysis": ai["reasons"]
     }
+def get_recommendation(df):
+    return generate_recommendation(df)
