@@ -7,6 +7,7 @@ from app.services.supertrend import calculate_supertrend
 from app.services.volume import calculate_volume
 from app.services.support_resistance import calculate_support_resistance
 from app.services.candlestick import calculate_candlestick_patterns
+from app.services.adx import calculate_adx
 
 router = APIRouter()
 
@@ -30,12 +31,13 @@ def get_signal(symbol: str):
             "message": "Market data not available"
         }
 
-    # Indicators
+    # Technical Indicators
     df = calculate_indicators(df)
     df = calculate_atr(df)
     df = calculate_supertrend(df)
     df = calculate_volume(df)
     df = calculate_candlestick_patterns(df)
+    df = calculate_adx(df)
 
     # Support & Resistance
     levels = calculate_support_resistance(df)
@@ -45,14 +47,18 @@ def get_signal(symbol: str):
     supertrend = latest["Supertrend_Direction"]
     candlestick = latest["Candlestick"]
 
+    adx = round(float(latest["ADX"]), 2)
+    plus_di = round(float(latest["PLUS_DI"]), 2)
+    minus_di = round(float(latest["MINUS_DI"]), 2)
+
     signal = "HOLD"
     confidence = 50
     trend = "Sideways"
     reason = []
 
-    # ============================
+    # ===============================
     # STRONG BUY
-    # ============================
+    # ===============================
     if (
         supertrend == "BUY"
         and latest["close"] > latest["EMA20"]
@@ -60,6 +66,7 @@ def get_signal(symbol: str):
         and latest["MACD"] > latest["MACD_SIGNAL"]
         and 55 <= latest["RSI"] <= 70
         and latest["RVOL"] >= 1
+        and latest["ADX"] >= 25
         and candlestick in [
             "HAMMER",
             "BULLISH_ENGULFING",
@@ -73,6 +80,7 @@ def get_signal(symbol: str):
 
         reason = [
             "Supertrend BUY",
+            "Strong ADX",
             "EMA Bullish",
             "MACD Bullish",
             "Healthy RSI",
@@ -80,9 +88,9 @@ def get_signal(symbol: str):
             candlestick
         ]
 
-    # ============================
+    # ===============================
     # STRONG SELL
-    # ============================
+    # ===============================
     elif (
         supertrend == "SELL"
         and latest["close"] < latest["EMA20"]
@@ -90,6 +98,7 @@ def get_signal(symbol: str):
         and latest["MACD"] < latest["MACD_SIGNAL"]
         and latest["RSI"] < 45
         and latest["RVOL"] >= 1
+        and latest["ADX"] >= 25
         and candlestick in [
             "SHOOTING_STAR",
             "BEARISH_ENGULFING",
@@ -103,6 +112,7 @@ def get_signal(symbol: str):
 
         reason = [
             "Supertrend SELL",
+            "Strong ADX",
             "EMA Bearish",
             "MACD Bearish",
             "Weak RSI",
@@ -154,11 +164,12 @@ def get_signal(symbol: str):
     reward = round(target2 - price, 2)
 
     risk_reward = (
-        f"1:{round(reward / risk, 2)}"
+        f"1:{round(reward / risk,2)}"
         if risk > 0 else "N/A"
     )
 
     return {
+
         "symbol": symbol.upper(),
 
         "signal": signal,
@@ -174,6 +185,10 @@ def get_signal(symbol: str):
         "supertrend_value": round(float(latest["Supertrend"]), 2),
 
         "candlestick": candlestick,
+
+        "ADX": adx,
+        "PLUS_DI": plus_di,
+        "MINUS_DI": minus_di,
 
         "ATR": atr,
 
