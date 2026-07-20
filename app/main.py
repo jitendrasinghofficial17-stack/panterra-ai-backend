@@ -1,7 +1,5 @@
 from fastapi import FastAPI
-
 from app.database import Base, engine
-
 from app.routers.users import router as users_router
 from app.routers.portfolio import router as portfolio_router
 from app.routers.watchlist import router as watchlist_router
@@ -20,6 +18,7 @@ from app.routers.dashboard import router as dashboard_router
 from app.routers.trade_journal import router as trade_journal_router
 from app.routers.performance import router as performance_router
 from app.routers.paper_trading import router as paper_trading_router
+from app.routers.ai_trade_review import router as ai_trade_review_router
 
 app = FastAPI(
     title="PANTERRA AI Backend",
@@ -134,4 +133,9 @@ app.include_router(
     paper_trading_router,
     prefix="/paper-trading",
     tags=["Paper Trading"]
+)
+app.include_router(
+    ai_trade_review_router,
+    prefix="/ai-trade-review",
+    tags=["AI Trade Review"]
 )
