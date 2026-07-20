@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 router = APIRouter()
 
 API_KEY = os.getenv("FINANCIALDATA_API_KEY")
-BASE_URL = "https://api.financialdatasets.ai"
+BASE_URL = "https://financialdata.net/api/v1"
 
 
 @router.get("/")
@@ -26,21 +26,16 @@ def get_quote(symbol: str):
             detail="FINANCIALDATA_API_KEY not configured"
         )
 
-    headers = {
-        "X-API-KEY": API_KEY
-    }
-
     try:
         response = requests.get(
-            f"{BASE_URL}/prices/snapshot",
+            f"{BASE_URL}/stock-prices",
             params={
-                "ticker": symbol.upper()
+                "identifier": symbol.upper(),
+                "key": API_KEY
             },
-            headers=headers,
             timeout=20
         )
 
-        # Debug logs
         print("========== FINANCIAL DATA API ==========")
         print("URL:", response.url)
         print("Status:", response.status_code)
@@ -55,22 +50,22 @@ def get_quote(symbol: str):
 
         data = response.json()
 
-        if "prices" not in data or len(data["prices"]) == 0:
+        if not data:
             raise HTTPException(
                 status_code=404,
                 detail="No market data found"
             )
 
-        latest = data["prices"][-1]
+        latest = data[0]
 
         return {
-            "symbol": symbol.upper(),
+            "symbol": latest.get("trading_symbol", symbol.upper()),
             "price": latest.get("close"),
             "open": latest.get("open"),
             "high": latest.get("high"),
             "low": latest.get("low"),
             "volume": latest.get("volume"),
-            "date": latest.get("time")
+            "date": latest.get("date")
         }
 
     except HTTPException:
