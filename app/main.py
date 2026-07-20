@@ -15,6 +15,9 @@ from app.routers.backtest import router as backtest_router
 from app.routers.prediction import router as prediction_router
 from app.routers.recommendation import router as recommendation_router
 from app.routers.symbols import router as symbols_router
+from app.routers.portfolio_analyzer import (
+    router as portfolio_analyzer_router
+)
 app = FastAPI(
     title="PANTERRA AI Backend",
     version="1.0.0",
@@ -103,4 +106,9 @@ app.include_router(
     symbols_router,
     prefix="/symbols",
     tags=["Symbols"]
+)
+app.include_router(
+    portfolio_analyzer_router,
+    prefix="/portfolio-analyzer",
+    tags=["Portfolio Analyzer"]
 )
