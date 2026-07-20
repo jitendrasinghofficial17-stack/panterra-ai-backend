@@ -1,7 +1,5 @@
 from fastapi import APIRouter
-import pandas as pd
-import random
-
+from app.services.market_data import get_historical_data
 from app.services.indicators import calculate_indicators
 
 router = APIRouter()
@@ -18,18 +16,13 @@ def signals_home():
 @router.get("/{symbol}")
 def get_signal(symbol: str):
 
-    # Temporary sample market data
-    prices = []
+    df = get_historical_data(symbol)
 
-    price = 100
-
-    for _ in range(100):
-        price += random.uniform(-2, 2)
-        prices.append(price)
-
-    df = pd.DataFrame({
-        "close": prices
-    })
+    if df is None:
+        return {
+            "status": "error",
+            "message": "Unable to fetch market data"
+        }
 
     df = calculate_indicators(df)
 
