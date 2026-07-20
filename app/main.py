@@ -4,6 +4,7 @@ from app.database import Base, engine
 
 from app.routers.users import router as users_router
 from app.routers.portfolio import router as portfolio_router
+from app.routers.watchlist import router as watchlist_router
 
 app = FastAPI(
     title="PANTERRA AI Backend",
@@ -35,4 +36,10 @@ app.include_router(
     portfolio_router,
     prefix="/portfolio",
     tags=["Portfolio"]
+)
+# Watchlist API
+app.include_router(
+    watchlist_router,
+    prefix="/watchlist",
+    tags=["Watchlist"]
 )
