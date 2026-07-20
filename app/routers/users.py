@@ -136,6 +136,7 @@ def get_my_profile(
             "created_at": current_user.created_at
         }
     }
+    
     @router.put("/profile")
 def update_profile(
     profile: UpdateProfile,
