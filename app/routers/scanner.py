@@ -8,9 +8,7 @@ router = APIRouter()
 def scanner():
 
     return {
-
-        "status":"success",
-
-        "stocks":scan_market()
-
+        "status": "success",
+        "scanner": "Panterra AI Scanner v2",
+        "stocks": scan_market()
     }
