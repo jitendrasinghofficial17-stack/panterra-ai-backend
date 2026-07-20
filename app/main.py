@@ -19,6 +19,7 @@ from app.routers.trade_journal import router as trade_journal_router
 from app.routers.performance import router as performance_router
 from app.routers.paper_trading import router as paper_trading_router
 from app.routers.ai_trade_review import router as ai_trade_review_router
+from app.routers.strategy_builder import router as strategy_builder_router
 
 app = FastAPI(
     title="PANTERRA AI Backend",
@@ -138,4 +139,9 @@ app.include_router(
     ai_trade_review_router,
     prefix="/ai-trade-review",
     tags=["AI Trade Review"]
+)
+app.include_router(
+    strategy_builder_router,
+    prefix="/strategy-builder",
+    tags=["AI Strategy Builder"]
 )
