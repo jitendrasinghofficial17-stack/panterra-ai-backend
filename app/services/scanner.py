@@ -7,6 +7,7 @@ from app.services.support_resistance import calculate_support_resistance
 from app.services.candlestick import calculate_candlestick_patterns
 from app.services.adx import calculate_adx
 from app.services.bollinger import calculate_bollinger_bands
+from app.services.ai_engine import calculate_ai_score
 
 WATCHLIST = [
     "AAPL",
@@ -35,106 +36,42 @@ def scan_market():
             if df is None or df.empty:
                 continue
 
+            # Calculate Indicators
             df = calculate_indicators(df)
             df = calculate_atr(df)
             df = calculate_supertrend(df)
             df = calculate_volume(df)
+            df = calculate_support_resistance(df)
             df = calculate_candlestick_patterns(df)
             df = calculate_adx(df)
             df = calculate_bollinger_bands(df)
 
             latest = df.iloc[-1]
 
-            score = 0
-            reasons = []
+            # AI Engine
+            ai = calculate_ai_score(df)
 
-            # -------------------------
-            # Supertrend
-            # -------------------------
-            if latest["Supertrend_Direction"] == "BUY":
-                score += 20
-                reasons.append("Supertrend BUY")
-
-            # -------------------------
-            # RSI
-            # -------------------------
-            if 55 <= latest["RSI"] <= 70:
-                score += 15
-                reasons.append("Healthy RSI")
-
-            elif latest["RSI"] > 70:
-                score += 8
-                reasons.append("Strong Momentum")
-
-            # -------------------------
-            # MACD
-            # -------------------------
-            if latest["MACD"] > latest["MACD_SIGNAL"]:
-                score += 15
-                reasons.append("MACD Bullish")
-
-            # -------------------------
-            # EMA
-            # -------------------------
-            if latest["close"] > latest["EMA20"]:
-                score += 10
-                reasons.append("Above EMA20")
-
-            # -------------------------
-            # SMA
-            # -------------------------
+            # Market Trend
             if latest["EMA20"] > latest["SMA20"]:
-                score += 10
-                reasons.append("EMA > SMA")
-
-            # -------------------------
-            # ADX
-            # -------------------------
-            if latest["ADX"] >= 25:
-                score += 10
-                reasons.append("Strong Trend")
-
-            # -------------------------
-            # Relative Volume
-            # -------------------------
-            if latest["RVOL"] >= 1:
-                score += 10
-                reasons.append("High Volume")
-
-            # -------------------------
-            # Bollinger
-            # -------------------------
-            if latest["BB_SIGNAL"] == "NORMAL":
-                score += 5
-
-            # -------------------------
-            # Candlestick
-            # -------------------------
-            if latest["Candlestick"] in [
-                "HAMMER",
-                "BULLISH_ENGULFING",
-                "BULLISH_HARAMI"
-            ]:
-                score += 10
-                reasons.append(latest["Candlestick"])
-
-            # -------------------------
-            # Final Signal
-            # -------------------------
-            if score >= 90:
-                signal = "STRONG BUY"
-
-            elif score >= 75:
-                signal = "BUY"
-
-            elif score >= 60:
-                signal = "WATCH"
-
-            elif score >= 40:
-                signal = "HOLD"
-
+                market_trend = "Bullish"
+            elif latest["EMA20"] < latest["SMA20"]:
+                market_trend = "Bearish"
             else:
-                signal = "SELL"
+                market_trend = "Sideways"
+
+            # Trend Strength
+            if latest["ADX"] >= 40:
+                trend_strength = "Very Strong"
+            elif latest["ADX"] >= 25:
+                trend_strength = "Strong"
+            elif latest["ADX"] >= 20:
+                trend_strength = "Moderate"
+            else:
+                trend_strength = "Weak"
+
+            # Support & Resistance (safe defaults)
+            support = latest["Support"] if "Support" in latest.index else None
+            resistance = latest["Resistance"] if "Resistance" in latest.index else None
 
             results.append({
 
@@ -142,13 +79,17 @@ def scan_market():
 
                 "price": round(float(latest["close"]), 2),
 
-                "signal": signal,
+                "action": ai["action"],
 
-                "score": score,
+                "grade": ai["grade"],
 
-                "confidence": score,
+                "technical_score": ai["score"],
 
-                "trend": latest["Supertrend_Direction"],
+                "confidence": ai["confidence"],
+
+                "market_trend": market_trend,
+
+                "trend_strength": trend_strength,
 
                 "RSI": round(float(latest["RSI"]), 2),
 
@@ -156,17 +97,24 @@ def scan_market():
 
                 "volume": int(latest["volume"]),
 
-                "reason": reasons
+                "support": support,
+
+                "resistance": resistance,
+
+                "analysis": ai["reasons"]
 
             })
 
         except Exception as e:
-            print(symbol, e)
+            print(f"{symbol}: {e}")
 
     results = sorted(
         results,
-        key=lambda x: x["score"],
+        key=lambda x: x["technical_score"],
         reverse=True
     )
+
+    for rank, stock in enumerate(results, start=1):
+        stock["rank"] = rank
 
     return results
