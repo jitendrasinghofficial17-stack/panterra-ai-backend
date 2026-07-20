@@ -8,7 +8,8 @@ from app.schemas import UserRegister, UserResponse
 from app.auth import (
     hash_password,
     verify_password,
-    create_access_token
+    create_access_token,
+    get_current_user
 )
 
 router = APIRouter()
@@ -42,7 +43,6 @@ def register_user(
         )
 
     if user.email:
-
         existing_email = db.query(User).filter(
             User.email == user.email
         ).first()
@@ -85,7 +85,7 @@ def login(
         User.mobile_number == mobile_number
     ).first()
 
-    if not user:
+    if user is None:
         raise HTTPException(
             status_code=401,
             detail="Invalid Mobile Number"
@@ -115,4 +115,24 @@ def login(
         "user_id": user.user_id,
         "full_name": user.full_name,
         "mobile_number": user.mobile_number
+    }
+
+
+@router.get("/me")
+def get_my_profile(
+    current_user: User = Depends(get_current_user)
+):
+
+    return {
+        "status": "success",
+        "user": {
+            "user_id": current_user.user_id,
+            "full_name": current_user.full_name,
+            "mobile_number": current_user.mobile_number,
+            "email": current_user.email,
+            "mobile_verified": current_user.mobile_verified,
+            "email_verified": current_user.email_verified,
+            "status": current_user.status,
+            "created_at": current_user.created_at
+        }
     }
