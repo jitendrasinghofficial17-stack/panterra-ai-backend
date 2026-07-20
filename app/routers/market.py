@@ -1,3 +1,22 @@
+import os
+import requests
+
+from fastapi import APIRouter, HTTPException
+
+router = APIRouter()
+
+API_KEY = os.getenv("FINANCIALDATA_API_KEY")
+BASE_URL = "https://api.financialdatasets.ai"
+
+
+@router.get("/")
+def market_home():
+    return {
+        "status": "success",
+        "message": "Live Market API Working"
+    }
+
+
 @router.get("/quote/{symbol}")
 def get_quote(symbol: str):
 
