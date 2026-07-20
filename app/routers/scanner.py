@@ -1,91 +1,48 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
-from app.services.market_data import get_historical_data
-from app.services.indicators import calculate_indicators
-from app.services.atr import calculate_atr
-from app.services.supertrend import calculate_supertrend
-from app.services.adx import calculate_adx
-from app.services.bollinger import calculate_bollinger_bands
-from app.services.ai_engine import calculate_ai_score
+from app.services.scanner import scan_market
 
 router = APIRouter()
 
-# You can expand this list later
-SYMBOLS = [
-    "AAPL",
-    "MSFT",
-    "NVDA",
-    "AMZN",
-    "META",
-    "GOOGL",
-    "TSLA",
-    "NFLX",
-    "AMD",
-    "PLTR"
-]
-
 
 @router.get("/")
-def scanner():
+def scanner(
 
-    results = []
+    symbols: str | None = Query(
+        default=None,
+        description="Comma separated symbols"
+    ),
 
-    for symbol in SYMBOLS:
+    min_score: int = Query(
+        default=0,
+        ge=0,
+        le=100
+    ),
 
-        try:
+    action: str | None = Query(
+        default=None
+    ),
 
-            df = get_historical_data(symbol)
-
-            if df is None or df.empty:
-                continue
-
-            df = calculate_indicators(df)
-            df = calculate_atr(df)
-            df = calculate_supertrend(df)
-            df = calculate_adx(df)
-            df = calculate_bollinger_bands(df)
-
-            ai = calculate_ai_score(df)
-
-            latest = df.iloc[-1]
-
-            results.append({
-
-                "symbol": symbol,
-
-                "price": round(float(latest["close"]), 2),
-
-                "action": ai["action"],
-
-                "grade": ai["grade"],
-
-                "score": ai["score"],
-
-                "confidence": ai["confidence"],
-
-                "trend": (
-                    "Bullish"
-                    if latest["EMA20"] > latest["SMA20"]
-                    else "Bearish"
-                )
-
-            })
-
-        except Exception:
-            continue
-
-    results = sorted(
-        results,
-        key=lambda x: x["score"],
-        reverse=True
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100
     )
 
-    for index, stock in enumerate(results, start=1):
-        stock["rank"] = index
+):
 
-    return {
-        "status": "success",
-        "market": "US",
-        "total_stocks": len(results),
-        "stocks": results
-    }
+    symbol_list = None
+
+    if symbols:
+        symbol_list = [
+            s.strip().upper()
+            for s in symbols.split(",")
+            if s.strip()
+        ]
+
+    return scan_market(
+        symbols=symbol_list,
+        min_score=min_score,
+        action=action,
+        limit=limit
+    )
