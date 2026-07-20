@@ -22,6 +22,7 @@ from app.routers.ai_trade_review import router as ai_trade_review_router
 from app.routers.strategy_builder import router as strategy_builder_router
 from app.routers.options_strategy import router as options_strategy_router
 from app.routers.options_chain_ai import router as options_chain_ai_router
+from app.routers.live_options_chain import router as live_options_chain_router
 
 app = FastAPI(
     title="PANTERRA AI Backend",
@@ -156,4 +157,9 @@ app.include_router(
     options_chain_ai_router,
     prefix="/options-chain-ai",
     tags=["AI Options Chain"]
+)
+app.include_router(
+    live_options_chain_router,
+    prefix="/live-options-chain",
+    tags=["Live Options Chain AI"]
 )
