@@ -118,3 +118,6 @@ def predict_price(df):
         "risk_reward": f"1:{rr}",
         "reasons": reasons
     }
+    
+def get_prediction(df):
+    return predict_price(df)
