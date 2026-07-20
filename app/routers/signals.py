@@ -4,8 +4,9 @@ from app.services.market_data import get_historical_data
 from app.services.indicators import calculate_indicators
 from app.services.atr import calculate_atr
 from app.services.supertrend import calculate_supertrend
-from app.services.support_resistance import calculate_support_resistance
 from app.services.volume import calculate_volume
+from app.services.support_resistance import calculate_support_resistance
+from app.services.candlestick import calculate_candlestick_patterns
 
 router = APIRouter()
 
@@ -31,57 +32,57 @@ def get_signal(symbol: str):
 
     # Indicators
     df = calculate_indicators(df)
-
-    # ATR
     df = calculate_atr(df)
-
-    # Supertrend
     df = calculate_supertrend(df)
-
-    # Volume
     df = calculate_volume(df)
+    df = calculate_candlestick_patterns(df)
 
     # Support & Resistance
     levels = calculate_support_resistance(df)
 
     latest = df.iloc[-1]
 
+    supertrend = latest["Supertrend_Direction"]
+    candlestick = latest["Candlestick"]
+
     signal = "HOLD"
-    confidence = 55
+    confidence = 50
     trend = "Sideways"
     reason = []
 
-    supertrend = latest["Supertrend_Direction"]
-
-    # ===============================
+    # ============================
     # STRONG BUY
-    # ===============================
+    # ============================
     if (
         supertrend == "BUY"
         and latest["close"] > latest["EMA20"]
         and latest["EMA20"] > latest["SMA20"]
         and latest["MACD"] > latest["MACD_SIGNAL"]
-        and latest["RSI"] > 55
-        and latest["RSI"] < 70
+        and 55 <= latest["RSI"] <= 70
         and latest["RVOL"] >= 1
+        and candlestick in [
+            "HAMMER",
+            "BULLISH_ENGULFING",
+            "BULLISH_HARAMI"
+        ]
     ):
 
         signal = "STRONG BUY"
-        confidence = 98
+        confidence = 99
         trend = "Bullish"
 
         reason = [
             "Supertrend BUY",
-            "Price above EMA20",
-            "EMA20 above SMA20",
+            "EMA Bullish",
             "MACD Bullish",
             "Healthy RSI",
-            "Strong Volume"
+            "Strong Volume",
+            candlestick
         ]
 
-    # ===============================
+    # ============================
     # STRONG SELL
-    # ===============================
+    # ============================
     elif (
         supertrend == "SELL"
         and latest["close"] < latest["EMA20"]
@@ -89,24 +90,27 @@ def get_signal(symbol: str):
         and latest["MACD"] < latest["MACD_SIGNAL"]
         and latest["RSI"] < 45
         and latest["RVOL"] >= 1
+        and candlestick in [
+            "SHOOTING_STAR",
+            "BEARISH_ENGULFING",
+            "BEARISH_HARAMI"
+        ]
     ):
 
         signal = "STRONG SELL"
-        confidence = 98
+        confidence = 99
         trend = "Bearish"
 
         reason = [
             "Supertrend SELL",
-            "Price below EMA20",
-            "EMA20 below SMA20",
+            "EMA Bearish",
             "MACD Bearish",
             "Weak RSI",
-            "Strong Volume"
+            "Strong Volume",
+            candlestick
         ]
 
-    # ===============================
     # BUY
-    # ===============================
     elif (
         latest["MACD"] > latest["MACD_SIGNAL"]
         and latest["RSI"] > 50
@@ -121,9 +125,7 @@ def get_signal(symbol: str):
             "RSI Positive"
         ]
 
-    # ===============================
     # SELL
-    # ===============================
     elif (
         latest["MACD"] < latest["MACD_SIGNAL"]
         and latest["RSI"] < 50
@@ -151,13 +153,12 @@ def get_signal(symbol: str):
     risk = round(price - stop_loss, 2)
     reward = round(target2 - price, 2)
 
-    if risk > 0:
-        risk_reward = f"1:{round(reward / risk,2)}"
-    else:
-        risk_reward = "N/A"
+    risk_reward = (
+        f"1:{round(reward / risk, 2)}"
+        if risk > 0 else "N/A"
+    )
 
     return {
-
         "symbol": symbol.upper(),
 
         "signal": signal,
@@ -170,7 +171,9 @@ def get_signal(symbol: str):
         "resistance": levels["resistance"],
 
         "supertrend": supertrend,
-        "supertrend_value": round(float(latest["Supertrend"]),2),
+        "supertrend_value": round(float(latest["Supertrend"]), 2),
+
+        "candlestick": candlestick,
 
         "ATR": atr,
 
@@ -183,17 +186,16 @@ def get_signal(symbol: str):
         "risk_reward": risk_reward,
 
         "volume": int(latest["volume"]),
-        "volume_ma20": round(float(latest["Volume_MA20"]),0),
-        "rvol": round(float(latest["RVOL"]),2),
+        "volume_ma20": round(float(latest["Volume_MA20"]), 0),
+        "rvol": round(float(latest["RVOL"]), 2),
         "volume_signal": latest["Volume_Signal"],
 
-        "RSI": round(float(latest["RSI"]),2),
-        "EMA20": round(float(latest["EMA20"]),2),
-        "SMA20": round(float(latest["SMA20"]),2),
+        "RSI": round(float(latest["RSI"]), 2),
+        "EMA20": round(float(latest["EMA20"]), 2),
+        "SMA20": round(float(latest["SMA20"]), 2),
 
-        "MACD": round(float(latest["MACD"]),4),
-        "MACD_SIGNAL": round(float(latest["MACD_SIGNAL"]),4),
+        "MACD": round(float(latest["MACD"]), 4),
+        "MACD_SIGNAL": round(float(latest["MACD_SIGNAL"]), 4),
 
         "reason": reason
-
     }
