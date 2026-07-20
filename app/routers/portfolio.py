@@ -8,6 +8,14 @@ from app.auth import get_current_user
 router = APIRouter()
 
 
+@router.get("/")
+def portfolio_home():
+    return {
+        "status": "success",
+        "message": "Portfolio API Working"
+    }
+
+
 @router.post("/create")
 def create_portfolio(
     portfolio_name: str,
@@ -34,8 +42,8 @@ def create_portfolio(
     }
 
 
-@router.get("/")
-def get_portfolios(
+@router.get("/my")
+def get_my_portfolios(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
