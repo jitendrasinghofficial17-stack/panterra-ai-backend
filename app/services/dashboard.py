@@ -37,9 +37,9 @@ def get_dashboard(symbol: str):
 
     ai = calculate_ai_score(df)
 
-    prediction = get_prediction(symbol)
+    prediction = get_prediction(df)
 
-    recommendation = get_recommendation(symbol)
+    recommendation = get_recommendation(df)
 
     # Market Trend
     if latest["EMA20"] > latest["SMA20"]:
