@@ -44,6 +44,21 @@ app = FastAPI(
     description="AI Powered Trading Platform Backend"
 )
 
+# CORS — required so the Next.js frontend (browser) can call this API.
+# Add the deployed frontend URL to allow_origins after deployment.
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        # "https://your-frontend.vercel.app",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
