@@ -29,6 +29,7 @@ from app.routers.live_options_chain import router as live_options_chain_router
 from app.routers.financialdata_test import router as financialdata_test_router
 from app.routers.live_options import router as live_options_router
 from app.routers.option_prices import router as option_prices_router
+from app.routers.option_greeks import router as option_greeks_router
 
 app = FastAPI(
     title="PANTERRA AI Backend",
@@ -183,4 +184,9 @@ app.include_router(
     option_prices_router,
     prefix="/option-prices",
     tags=["Option Prices"]
+)
+app.include_router(
+    option_greeks_router,
+    prefix="/option-greeks",
+    tags=["Option Greeks"]
 )
