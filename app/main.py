@@ -32,6 +32,7 @@ from app.routers.option_prices import router as option_prices_router
 from app.routers.option_greeks import router as option_greeks_router
 from app.routers.option_scoring import router as option_scoring_router
 from app.routers.ai_options import router as ai_options_router
+from app.routers.volatility import router as volatility_router
 
 app = FastAPI(
     title="PANTERRA AI Backend",
@@ -201,4 +202,9 @@ app.include_router(
     ai_options_router,
     prefix="/ai-options",
     tags=["AI Options"]
+)
+app.include_router(
+    volatility_router,
+    prefix="/volatility",
+    tags=["Volatility Engine"]
 )
