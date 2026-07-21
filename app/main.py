@@ -35,6 +35,7 @@ from app.routers.ai_options import router as ai_options_router
 from app.routers.volatility import router as volatility_router
 from app.routers.probability import router as probability_router
 from app.routers.market_regime import router as market_regime_router
+from app.routers.institutional_flow import router as institutional_flow_router
 
 app = FastAPI(
     title="PANTERRA AI Backend",
@@ -219,4 +220,9 @@ app.include_router(
     market_regime_router,
     prefix="/market-regime",
     tags=["Market Regime"]
+)
+app.include_router(
+    institutional_flow_router,
+    prefix="/institutional-flow",
+    tags=["Institutional Flow"]
 )
