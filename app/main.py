@@ -34,6 +34,7 @@ from app.routers.option_scoring import router as option_scoring_router
 from app.routers.ai_options import router as ai_options_router
 from app.routers.volatility import router as volatility_router
 from app.routers.probability import router as probability_router
+from app.routers.market_regime import router as market_regime_router
 
 app = FastAPI(
     title="PANTERRA AI Backend",
@@ -213,4 +214,9 @@ app.include_router(
     probability_router,
     prefix="/probability",
     tags=["Probability Engine"]
+)
+app.include_router(
+    market_regime_router,
+    prefix="/market-regime",
+    tags=["Market Regime"]
 )
