@@ -1,0 +1,63 @@
+# PANTERRA AI — Frontend
+
+Next.js 15 frontend for the PANTERRA AI FastAPI backend.
+
+## Status: Module 1 of 6 (Foundation)
+
+| Module | Scope | Status |
+|---|---|---|
+| 1 | Setup, theme, auth, layout, sidebar, topbar, dashboard | DONE |
+| 2 | Markets + live data feed integration | pending |
+| 3 | Charts, Scanner, AI Signals pages | pending |
+| 4 | Paper Trading, Trade Journal, Performance | pending |
+| 5 | Option Chain, Greeks, Volatility, Probability, Regime, Flow | pending |
+| 6 | Admin panel, Settings, Reports (after SEBI decision) | pending |
+
+## Run it
+
+```bash
+npm install
+cp .env.example .env.local   # set NEXT_PUBLIC_API_URL to the Render backend URL
+npm run dev                  # open http://localhost:3000
+```
+
+## REQUIRED backend change (CORS)
+
+The FastAPI backend currently has **no CORS middleware**, so every browser
+request from this app will be blocked. Add this to `app/main.py` right after
+`app = FastAPI(...)`:
+
+```python
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # add the deployed frontend URL later
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+## Endpoint contract
+
+All backend paths live in ONE file: `src/lib/constants/endpoints.ts`.
+The auth paths (`/users/login`, `/users/register`) are assumptions — verify
+them against the backend's `/docs` page (Swagger) and correct them there if
+they differ. Expected login response shape: `{ "access_token": "...", "token_type": "bearer" }`.
+
+If the backend is unreachable, the dashboard renders clearly-labelled sample
+data so the UI can still be reviewed.
+
+## Compliance position (do not remove)
+
+This build is positioned as **analytics + paper trading only**. Signal cards
+are labelled "for study & paper trading only" and the sidebar carries a
+not-investment-advice notice. Do not add payments, subscriptions, or
+real-money trade recommendations before resolving SEBI Research
+Analyst / Investment Adviser registration.
+
+## Stack
+
+Next.js 15 · React 19 · TypeScript (strict) · Tailwind CSS · TanStack Query ·
+Zustand · React Hook Form · Recharts · react-hot-toast · lucide-react
