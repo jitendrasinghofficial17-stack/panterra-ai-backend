@@ -27,6 +27,7 @@ from app.routers.options_strategy import router as options_strategy_router
 from app.routers.options_chain_ai import router as options_chain_ai_router
 from app.routers.live_options_chain import router as live_options_chain_router
 from app.routers.financialdata_test import router as financialdata_test_router
+from app.routers.live_options import router as live_options_router
 from app.routers.option_price import router as option_prices_router
 from app.routers.option_greeks import router as option_greeks_router
 from app.routers.option_scoring import router as option_scoring_router
